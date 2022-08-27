@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'package:paidwik/Appconstant/imagefile.dart';
 import 'package:paidwik/routes/app_routes.dart';
@@ -78,12 +79,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
             width: 30.h,
             child: ElevatedButton(
                 onPressed: () {
-                  save(
-                      cPasswordController.text,
-                      passwordController.text,
-                      emailController.text,
-                      nameController.text,
-                      mobileController.value);
+                  // save(
+                  //     cPasswordController.text,
+                  //     passwordController.text,
+                  //     emailController.text,
+                  //     nameController.text,
+                  //     mobileController.value);
+                  googleSignIn();
                 },
                 style: ButtonStyle(
                     backgroundColor:
@@ -122,6 +124,37 @@ class _SignUpScreenState extends State<SignUpScreen> {
     } catch (e) {
       registerToast(e.toString());
       debugPrint(e.toString());
+    }
+  }
+
+  Future googleSignIn() async {
+    GoogleSignInAccount _userObj;
+    GoogleSignIn googleSignIn = GoogleSignIn();
+    GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+    if (googleUser != null) {
+      try {
+        var response = await http.post(
+            Uri.parse('https://paidkwik.com/api/login_with_google'),
+            body: {
+              "mobile": '7046833555',
+              "google_id": googleUser.id,
+              "email": googleUser.email,
+              "name": googleUser.displayName,
+              "profile_pic": googleUser.photoUrl,
+            });
+        var responseData = json.decode(response.body);
+
+        debugPrint('-----------$responseData');
+
+        var d = Data.fromJson(responseData);
+        if (response.statusCode == 200) {
+          Get.toNamed(AppRoutes.loging);
+        }
+        registerToast("${d.message}");
+      } catch (e) {
+        registerToast(e.toString());
+        debugPrint(e.toString());
+      }
     }
   }
 
